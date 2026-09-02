@@ -24,12 +24,12 @@
       color: var(--text-main);
       display: flex;
       justify-content: center;
-      padding: 2rem;
+      padding: 2rem 1rem;
       margin: 0;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 850px;
       width: 100%;
     }
 
@@ -38,15 +38,11 @@
       margin-bottom: 2rem;
     }
 
-    h1 {
-      margin-bottom: 0.5rem;
-    }
-
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 1rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     .stat-card {
@@ -57,11 +53,16 @@
       text-align: center;
     }
 
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
     .stat-value {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       font-weight: bold;
       color: #58a6ff;
-      margin-top: 0.5rem;
+      margin-top: 0.4rem;
     }
 
     .tracker-card {
@@ -69,6 +70,36 @@
       border: 1px solid var(--border-color);
       border-radius: 6px;
       padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .heatmap-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 650px;
+    }
+
+    .months-header {
+      display: flex;
+      margin-left: 32px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      height: 16px;
+    }
+
+    .heatmap-body {
+      display: flex;
+      gap: 8px;
+    }
+
+    .days-column {
+      display: grid;
+      grid-template-rows: repeat(7, 12px);
+      gap: 4px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 12px;
     }
 
     .grid-container {
@@ -77,8 +108,6 @@
       grid-auto-flow: column;
       grid-auto-columns: 12px;
       gap: 4px;
-      overflow-x: auto;
-      padding-bottom: 1rem;
     }
 
     .day-cell {
@@ -86,7 +115,7 @@
       height: 12px;
       border-radius: 2px;
       background-color: var(--color-empty);
-      outline: 1px solid rgba(27, 31, 36, 0.04);
+      outline: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .day-cell[data-status="streamed"] { background-color: var(--color-streamed); }
@@ -97,16 +126,16 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 0.5rem;
+      gap: 0.75rem;
       font-size: 0.8rem;
       color: var(--text-muted);
-      margin-top: 1rem;
+      margin-top: 1.5rem;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: 0.3rem;
     }
 
     .legend-box {
@@ -121,33 +150,43 @@
 <div class="container">
   <header>
     <h1>Peppseez Ditch Tracker</h1>
-    <p style="color: var(--text-muted);">Tracking promises vs. reality via TwitchTracker data</p>
+    <p style="color: var(--text-muted);">Tracking promises vs. reality via Twitch stream history</p>
   </header>
 
   <div class="stats-grid">
     <div class="stat-card">
-      <div>Total Ditches</div>
-      <div class="stat-value" id="total-ditches">0</div>
+      <div class="stat-label">Total Ditches</div>
+      <div class="stat-value" id="total-ditches" style="color: var(--color-ditched);">0</div>
     </div>
     <div class="stat-card">
-      <div>Total Streams</div>
-      <div class="stat-value" id="total-streams">0</div>
+      <div class="stat-label">Total Streams</div>
+      <div class="stat-value" id="total-streams" style="color: var(--color-streamed);">0</div>
     </div>
     <div class="stat-card">
-      <div>Stream Success Rate</div>
+      <div class="stat-label">Success Rate</div>
       <div class="stat-value" id="success-rate">0%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Current Streak</div>
+      <div class="stat-value" id="current-streak">0 days</div>
     </div>
   </div>
 
   <div class="tracker-card">
-    <div class="grid-container" id="heatmap-grid"></div>
+    <div class="heatmap-wrapper">
+      <div class="months-header" id="months-header"></div>
+      <div class="heatmap-body">
+        <div class="days-column">
+          <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
+        </div>
+        <div class="grid-container" id="heatmap-grid"></div>
+      </div>
+    </div>
 
     <div class="legend">
-      <span>Less</span>
-      <div class="legend-item"><div class="legend-box" style="background: var(--color-off);"></div> Off Day</div>
+      <div class="legend-item"><div class="legend-box" style="background: var(--color-off);"></div> Off</div>
       <div class="legend-item"><div class="legend-box" style="background: var(--color-streamed);"></div> Streamed</div>
       <div class="legend-item"><div class="legend-box" style="background: var(--color-ditched);"></div> Ditched</div>
-      <span>More</span>
     </div>
   </div>
 </div>
@@ -155,18 +194,18 @@
 <script>
   async function initTracker() {
     try {
-      // Fetch the permanent JSON database from the repo
       const response = await fetch('streams.json');
       const streamData = await response.json();
 
       const grid = document.getElementById('heatmap-grid');
-      const totalDays = 112; // ~16 weeks / roughly 4 months view
+      const totalDays = 112; // 16 weeks
       const today = new Date();
       
       let totalStreams = 0;
       let totalDitches = 0;
+      let currentStreak = 0;
+      let countingStreak = true;
 
-      // Render cells backwards from today
       for (let i = totalDays - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(today.getDate() - i);
@@ -185,15 +224,21 @@
 
         if (status === 'streamed') totalStreams++;
         if (status === 'ditched') totalDitches++;
+
+        // Calculate Current Streak from today backwards
+        if (countingStreak) {
+          if (status === 'streamed') currentStreak++;
+          else if (status === 'ditched') countingStreak = false;
+        }
       }
 
-      // Calculate stats
       const totalPromised = totalStreams + totalDitches;
       const rate = totalPromised > 0 ? Math.round((totalStreams / totalPromised) * 100) : 100;
       
       document.getElementById('total-ditches').textContent = totalDitches;
       document.getElementById('total-streams').textContent = totalStreams;
       document.getElementById('success-rate').textContent = `${rate}%`;
+      document.getElementById('current-streak').textContent = `${currentStreak} d`;
 
     } catch (error) {
       console.error('Error loading stream data:', error);

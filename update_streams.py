@@ -1,44 +1,57 @@
 import json
-import urllib.request
-from datetime import datetime
-from bs4 import BeautifulSoup
+import os
+import requests
+from datetime import datetime, timezone
 
-CHANNEL = "peppseez"  # Change to the streamer's Twitch handle
-URL = f"https://twitchtracker.com/{CHANNEL}/streams"
+CHANNEL_NAME = "peppseez"
 
-# Use custom headers so TwitchTracker doesn't block the request
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-req = urllib.request.Request(URL, headers=headers)
+# Official Twitch Helix API Endpoint
+URL = f"https://api.twitch.tv/helix/streams?user_login={CHANNEL_NAME}"
 
-try:
-    html = urllib.request.urlopen(req).read()
-    soup = BeautifulSoup(html, 'html.parser')
+# Public Client ID used by the Twitch web client
+HEADERS = {
+    'Client-ID': 'kimne78kx3ncx6br8ac42060chm450',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+}
 
-    # Load existing streams.json
+def update_tracker():
+    today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
+    # 1. Load current JSON database
     try:
         with open('streams.json', 'r') as f:
             data = json.load(f)
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         data = {}
 
-    # Extract dates from the stream history table
-    # TwitchTracker renders streams inside a table with dates
-    rows = soup.find_all('tr')
-    for row in rows:
-        time_tag = row.find('time')
-        if time_tag and 'datetime' in time_tag.attrs:
-            # Format date as YYYY-MM-DD
-            raw_date = time_tag['datetime'].split('T')[0]
-            
-            # If it's on TwitchTracker's stream list, mark as "streamed"
-            if raw_date not in data or data[raw_date] == "empty":
-                data[raw_date] = "streamed"
+    # 2. Check if Twitch says the channel is currently LIVE
+    try:
+        response = requests.get(URL, headers=HEADERS, timeout=10)
+        response.raise_for_status()
+        res_data = response.json()
 
-    # Save back to streams.json
+        is_live = len(res_data.get('data', [])) > 0
+
+        if is_live:
+            # Mark today as streamed
+            data[today_str] = "streamed"
+            print(f"[{today_str}] Channel is currently LIVE! Recorded as 'streamed'.")
+        else:
+            # If no status exists for today, set default status
+            # Adjust 'ditched' vs 'off' depending on your preference logic
+            if today_str not in data or data[today_str] == "empty":
+                data[today_str] = "ditched"
+                print(f"[{today_str}] Channel was offline at check. Recorded as 'ditched'.")
+
+    except Exception as e:
+        print(f"Error fetching Twitch API: {e}")
+        return
+
+    # 3. Save back to streams.json
     with open('streams.json', 'w') as f:
         json.dump(data, f, indent=2, sort_keys=True)
 
     print("Successfully updated streams.json")
 
-except Exception as e:
-    print(f"Error fetching TwitchTracker: {e}")
+if __name__ == "__main__":
+    update_tracker()
