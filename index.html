@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peppseez Ditch Tracker</title>
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --border-color: #30363d;
+      --text-main: #c9d1d9;
+      --text-muted: #8b949e;
+      
+      --color-empty: #161b22;
+      --color-off: #21262d;
+      --color-streamed: #238636;
+      --color-ditched: #da3633;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #58a6ff;
+      margin-top: 0.5rem;
+    }
+
+    .tracker-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.5rem;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-rows: repeat(7, 12px);
+      grid-auto-flow: column;
+      grid-auto-columns: 12px;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+
+    .day-cell {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      background-color: var(--color-empty);
+      outline: 1px solid rgba(27, 31, 36, 0.04);
+    }
+
+    .day-cell[data-status="streamed"] { background-color: var(--color-streamed); }
+    .day-cell[data-status="ditched"] { background-color: var(--color-ditched); }
+    .day-cell[data-status="off"] { background-color: var(--color-off); }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Peppseez Ditch Tracker</h1>
+    <p style="color: var(--text-muted);">Tracking promises vs. reality via TwitchTracker data</p>
+  </header>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div>Total Ditches</div>
+      <div class="stat-value" id="total-ditches">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Total Streams</div>
+      <div class="stat-value" id="total-streams">0</div>
+    </div>
+    <div class="stat-card">
+      <div>Stream Success Rate</div>
+      <div class="stat-value" id="success-rate">0%</div>
+    </div>
+  </div>
+
+  <div class="tracker-card">
+    <div class="grid-container" id="heatmap-grid"></div>
+
+    <div class="legend">
+      <span>Less</span>
+      <div class="legend-item"><div class="legend-box" style="background: var(--color-off);"></div> Off Day</div>
+      <div class="legend-item"><div class="legend-box" style="background: var(--color-streamed);"></div> Streamed</div>
+      <div class="legend-item"><div class="legend-box" style="background: var(--color-ditched);"></div> Ditched</div>
+      <span>More</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function initTracker() {
+    try {
+      // Fetch the permanent JSON database from the repo
+      const response = await fetch('streams.json');
+      const streamData = await response.json();
+
+      const grid = document.getElementById('heatmap-grid');
+      const totalDays = 112; // ~16 weeks / roughly 4 months view
+      const today = new Date();
+      
+      let totalStreams = 0;
+      let totalDitches = 0;
+
+      // Render cells backwards from today
+      for (let i = totalDays - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(today.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+        
+        const cell = document.createElement('div');
+        cell.classList.add('day-cell');
+        
+        const status = streamData[dateString] || 'empty';
+        if (status !== 'empty') {
+          cell.setAttribute('data-status', status);
+        }
+        
+        cell.title = `${dateString}: ${status}`;
+        grid.appendChild(cell);
+
+        if (status === 'streamed') totalStreams++;
+        if (status === 'ditched') totalDitches++;
+      }
+
+      // Calculate stats
+      const totalPromised = totalStreams + totalDitches;
+      const rate = totalPromised > 0 ? Math.round((totalStreams / totalPromised) * 100) : 100;
+      
+      document.getElementById('total-ditches').textContent = totalDitches;
+      document.getElementById('total-streams').textContent = totalStreams;
+      document.getElementById('success-rate').textContent = `${rate}%`;
+
+    } catch (error) {
+      console.error('Error loading stream data:', error);
+    }
+  }
+
+  initTracker();
+</script>
+
+</body>
+</html>
