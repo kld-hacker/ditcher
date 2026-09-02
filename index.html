@@ -86,6 +86,11 @@
       font-size: 0.75rem;
       color: var(--text-muted);
       height: 16px;
+      position: relative;
+    }
+
+    .month-label {
+      position: absolute;
     }
 
     .heatmap-body {
@@ -197,19 +202,50 @@
       const streamData = await response.json();
 
       const grid = document.getElementById('heatmap-grid');
-      const totalDays = 112; // 16 weeks
+      const monthsHeader = document.getElementById('months-header');
+      
+      const numWeeks = 18; // Number of weeks shown in graph
       const today = new Date();
       
+      // Calculate start date by going back `numWeeks` and aligning to Sunday (index 0)
+      const todayDayOfWeek = today.getDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() - ((numWeeks - 1) * 7 + todayDayOfWeek));
+
       let totalStreams = 0;
       let totalDitches = 0;
       let currentStreak = 0;
       let countingStreak = true;
 
-      for (let i = totalDays - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(today.getDate() - i);
-        const dateString = date.toISOString().split('T')[0];
-        
+      let lastMonth = -1;
+      let colIndex = 0;
+
+      // Iterate forward day by day from start date to today
+      const currentDate = new Date(startDate);
+      
+      // Temporary storage for reverse calculations of streak
+      const dateList = [];
+
+      while (currentDate <= today) {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+
+        // Add month label when crossing into a new month
+        if (currentDate.getDay() === 0) { // Check on Sundays (start of new column)
+          const currentMonth = currentDate.getMonth();
+          if (currentMonth !== lastMonth) {
+            const monthLabel = document.createElement('span');
+            monthLabel.classList.add('month-label');
+            monthLabel.textContent = currentDate.toLocaleString('default', { month: 'short' });
+            monthLabel.style.left = `${colIndex * 16}px`; // 12px cell + 4px gap
+            monthsHeader.appendChild(monthLabel);
+            lastMonth = currentMonth;
+          }
+          colIndex++;
+        }
+
         const cell = document.createElement('div');
         cell.classList.add('day-cell');
         
@@ -224,10 +260,19 @@
         if (status === 'streamed') totalStreams++;
         if (status === 'ditched') totalDitches++;
 
-        // Calculate Current Streak from today backwards
-        if (countingStreak) {
-          if (status === 'streamed') currentStreak++;
-          else if (status === 'ditched') countingStreak = false;
+        dateList.push({ dateString, status });
+
+        // Advance by 1 day
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Calculate Current Ditch Streak backwards starting from today
+      for (let i = dateList.length - 1; i >= 0; i--) {
+        const status = dateList[i].status;
+        if (status === 'ditched') {
+          currentStreak++;
+        } else if (status === 'streamed') {
+          break; // Stop when hitting a streamed day
         }
       }
 
