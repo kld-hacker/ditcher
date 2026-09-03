@@ -5,24 +5,11 @@ from datetime import datetime, timezone
 CHANNEL_NAME = "peppseez"
 JSON_FILE = "streams.json"
 
-# Public Twitch Web App Credentials
-CLIENT_ID = 'kimne78kx3ncx6br8ac42060chm450'
-
-def get_guest_access_token():
-    """Generates an OAuth token using public Twitch Client ID."""
-    try:
-        url = "https://id.twitch.tv/oauth2/token"
-        params = {
-            "client_id": CLIENT_ID,
-            "grant_type": "client_credentials"
-        }
-        # Request token
-        res = requests.post(url, params=params, timeout=10)
-        res.raise_for_status()
-        return res.json().get("access_token")
-    except Exception as e:
-        print(f"Failed to get access token: {e}")
-        return None
+# Headers mimicking a standard browser request
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
 
 def check_and_update():
     now = datetime.now(timezone.utc)
@@ -36,24 +23,14 @@ def check_and_update():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {}
 
-    # Get guest access token
-    token = get_guest_access_token()
-    
-    headers = {
-        'Client-ID': CLIENT_ID,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-    }
-    if token:
-        headers['Authorization'] = f'Bearer {token}'
-
-    # Query Twitch API
+    # Check live status via HTML scraping
     try:
-        url = f"https://api.twitch.tv/helix/streams?user_login={CHANNEL_NAME}"
-        response = requests.get(url, headers=headers, timeout=10)
+        url = f"https://www.twitch.tv/{CHANNEL_NAME}"
+        response = requests.get(url, headers=HEADERS, timeout=10)
         response.raise_for_status()
-        res_data = response.json()
-
-        is_live = len(res_data.get('data', [])) > 0
+        
+        # Twitch embeds "isLiveBroadcast" in the page metadata when a channel is live
+        is_live = "isLiveBroadcast" in response.text
 
         if is_live:
             data[today_str] = "streamed"
@@ -70,7 +47,7 @@ def check_and_update():
                 print(f"[{today_str}] Channel offline. Waiting for remaining hourly checks before marking 'ditched'.")
 
     except Exception as e:
-        print(f"Error querying Twitch API: {e}")
+        print(f"Error fetching channel page: {e}")
         return
 
     # Save updated JSON file
