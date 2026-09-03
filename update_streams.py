@@ -5,11 +5,24 @@ from datetime import datetime, timezone
 CHANNEL_NAME = "peppseez"
 JSON_FILE = "streams.json"
 
-# Public Client ID used by Twitch web app (no secret required)
-HEADERS = {
-    'Client-ID': 'kimne78kx3ncx6br8ac42060chm450',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-}
+# Public Twitch Web App Credentials
+CLIENT_ID = 'kimne78kx3ncx6br8ac42060chm450'
+
+def get_guest_access_token():
+    """Generates an OAuth token using public Twitch Client ID."""
+    try:
+        url = "https://id.twitch.tv/oauth2/token"
+        params = {
+            "client_id": CLIENT_ID,
+            "grant_type": "client_credentials"
+        }
+        # Request token
+        res = requests.post(url, params=params, timeout=10)
+        res.raise_for_status()
+        return res.json().get("access_token")
+    except Exception as e:
+        print(f"Failed to get access token: {e}")
+        return None
 
 def check_and_update():
     now = datetime.now(timezone.utc)
@@ -23,10 +36,20 @@ def check_and_update():
     except (FileNotFoundError, json.JSONDecodeError):
         data = {}
 
+    # Get guest access token
+    token = get_guest_access_token()
+    
+    headers = {
+        'Client-ID': CLIENT_ID,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+    }
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+
     # Query Twitch API
     try:
         url = f"https://api.twitch.tv/helix/streams?user_login={CHANNEL_NAME}"
-        response = requests.get(url, headers=HEADERS, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         res_data = response.json()
 
