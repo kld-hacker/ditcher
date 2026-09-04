@@ -26,6 +26,20 @@
       justify-content: center;
       padding: 2rem 1rem;
       margin: 0;
+      transition: background 0.3s ease;
+    }
+
+    /* Jester Mode Overlay Styles */
+    body.jester-mode {
+      background: url('https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3Y2ZXloNncwaWx4dHdxanRscWE4Nmp4ZWtodzhrYTJ5OGRlcmhxYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SJr1uPuuxVSP3rRL6T/giphy.gif') center center fixed !important;
+      background-size: cover !important;
+    }
+
+    body.jester-mode .stat-card,
+    body.jester-mode .tracker-card,
+    body.jester-mode .reason-panel {
+      background-color: rgba(22, 27, 34, 0.85) !important;
+      backdrop-filter: blur(4px);
     }
 
     .container {
@@ -194,6 +208,33 @@
       border: 1px solid var(--border-color);
       min-height: 24px;
     }
+
+    /* Settings / Jester Button (Top-Right & Scaled Up) */
+    #jester-toggle {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 1.75rem;
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.4s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    #jester-toggle:hover {
+      color: var(--text-main);
+      border-color: #58a6ff;
+      transform: rotate(90deg) scale(1.05);
+    }
   </style>
 </head>
 <body>
@@ -244,7 +285,6 @@
     </div>
   </div>
 
-  <!-- Dynamic Reason Display Panel -->
   <div class="reason-panel">
     <div class="reason-panel-header">
       <span class="reason-panel-title">Ditch Reason</span>
@@ -253,6 +293,9 @@
     <div class="reason-panel-content" id="panel-reason">Select any ditched day to view the recorded reason.</div>
   </div>
 </div>
+
+<button id="jester-toggle" title="Settings" aria-label="Settings">⚙️</button>
+<audio id="clown-audio" src="https://cdn.pixabay.com/download/audio/2025/03/18/audio_f84f5d6551.mp3" loop></audio>
 
 <script>
   async function initTracker() {
@@ -321,7 +364,6 @@
           cell.setAttribute('data-status', status);
         }
 
-        // Live panel update when clicking ditched days
         if (status === 'ditched') {
           cell.addEventListener('click', () => {
             panelDate.textContent = dateString;
@@ -347,7 +389,6 @@
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // Calculate Current Active Ditch Streak backwards from today
       for (let i = dateList.length - 1; i >= 0; i--) {
         const status = dateList[i].status;
         if (status === 'ditched') {
@@ -370,6 +411,23 @@
       console.error('Error loading stream data:', error);
     }
   }
+
+  // Jester Mode Handler
+  const jesterBtn = document.getElementById('jester-toggle');
+  const clownAudio = document.getElementById('clown-audio');
+
+  jesterBtn.addEventListener('click', () => {
+    const isActive = document.body.classList.toggle('jester-mode');
+
+    if (isActive) {
+      clownAudio.currentTime = 0;
+      clownAudio.play().catch(e => console.log('Audio playback blocked:', e));
+      jesterBtn.textContent = '🤡';
+    } else {
+      clownAudio.pause();
+      jesterBtn.textContent = '⚙️';
+    }
+  });
 
   initTracker();
 </script>
