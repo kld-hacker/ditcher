@@ -95,5 +95,9 @@
     "reason": "Used eye drops???",
     "status": "ditched"
   },
-  "2026-09-03": "streamed"
+  "2026-09-03": "streamed",
+  "2026-09-04": {
+    "reason": "",
+    "status": "ditched"
+  }
 }
