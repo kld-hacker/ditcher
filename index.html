@@ -29,7 +29,7 @@
       transition: background 0.3s ease;
     }
 
-    /* Jester Mode Overlay Styles */
+    /* Jester / Dev Mode Styles */
     body.jester-mode {
       background: url('https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3Y2ZXloNncwaWx4dHdxanRscWE4Nmp4ZWtodzhrYTJ5OGRlcmhxYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SJr1uPuuxVSP3rRL6T/giphy.gif') center center fixed !important;
       background-size: cover !important;
@@ -37,7 +37,9 @@
 
     body.jester-mode .stat-card,
     body.jester-mode .tracker-card,
-    body.jester-mode .reason-panel {
+    body.jester-mode .reason-panel,
+    body.jester-mode .modal-card,
+    body.jester-mode .settings-banner {
       background-color: rgba(22, 27, 34, 0.85) !important;
       backdrop-filter: blur(4px);
     }
@@ -50,6 +52,42 @@
     header {
       text-align: center;
       margin-bottom: 2rem;
+    }
+
+    /* Teaser Banner */
+    .settings-banner {
+      background-color: var(--card-bg);
+      border: 1px solid #f85149;
+      color: var(--text-main);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      box-shadow: 0 0 12px rgba(248, 81, 73, 0.25);
+      animation: pulse-border 2s infinite;
+    }
+
+    @keyframes pulse-border {
+      0% { border-color: #f85149; box-shadow: 0 0 8px rgba(248, 81, 73, 0.2); }
+      50% { border-color: #da3633; box-shadow: 0 0 16px rgba(218, 54, 51, 0.5); }
+      100% { border-color: #f85149; box-shadow: 0 0 8px rgba(248, 81, 73, 0.2); }
+    }
+
+    #close-banner {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0.25rem;
+    }
+
+    #close-banner:hover {
+      color: var(--text-main);
     }
 
     .stats-grid {
@@ -171,8 +209,9 @@
       border-radius: 2px;
     }
 
-    /* Under-Calendar Reason Panel */
+    /* Ditch Reason Panel */
     .reason-panel {
+      display: none;
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 6px;
@@ -209,8 +248,8 @@
       min-height: 24px;
     }
 
-    /* Settings / Jester Button (Top-Right & Scaled Up) */
-    #jester-toggle {
+    /* Floating Settings Button */
+    #settings-open-btn {
       position: fixed;
       top: 1.25rem;
       right: 1.25rem;
@@ -226,20 +265,141 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.4s ease;
+      transition: border-color 0.2s ease, transform 0.4s ease;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    #jester-toggle:hover {
+    #settings-open-btn:hover {
       color: var(--text-main);
       border-color: #58a6ff;
-      transform: rotate(90deg) scale(1.05);
+      transform: rotate(90deg);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 440px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+
+    .setting-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .setting-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Toggle Switch Styling */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--color-off);
+      transition: .2s;
+      border-radius: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--text-muted);
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #238636;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+      background-color: white;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Teaser / Testing Banner -->
+  <div id="settings-banner" class="settings-banner">
+    <span>💡 <strong>Notice:</strong> Ditch Notes are currently hidden. You can enable them in <strong>Settings</strong> (top-right ⚙️) to test them while under development!</span>
+    <button id="close-banner" aria-label="Close banner">×</button>
+  </div>
+
   <header>
     <h1>Peppseez Ditch Tracker</h1>
   </header>
@@ -294,7 +454,42 @@
   </div>
 </div>
 
-<button id="jester-toggle" title="Settings" aria-label="Settings">⚙️</button>
+<!-- Settings Gear Button -->
+<button id="settings-open-btn" title="Settings" aria-label="Settings">⚙️</button>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Preferences</h2>
+      <button id="settings-close-btn" class="close-btn">&times;</button>
+    </div>
+    
+    <div class="setting-item">
+      <div>
+        <div class="setting-title">Display Ditch Notes</div>
+        <div class="setting-desc">Show the ditch reason panel under the heatmap</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-notes">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-title">Dev / Experimental Mode ❓</div>
+        <div class="setting-desc">Enable experimental streamer performance tracking...</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-jester">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Clown Audio -->
 <audio id="clown-audio" src="https://cdn.pixabay.com/download/audio/2025/03/18/audio_f84f5d6551.mp3" loop></audio>
 
 <script>
@@ -412,20 +607,47 @@
     }
   }
 
-  // Jester Mode Handler
-  const jesterBtn = document.getElementById('jester-toggle');
+  // Teaser Banner Logic
+  const banner = document.getElementById('settings-banner');
+  const closeBannerBtn = document.getElementById('close-banner');
+
+  closeBannerBtn.addEventListener('click', () => {
+    banner.style.display = 'none';
+  });
+
+  // Settings & Modal Controls
+  const settingsBtn = document.getElementById('settings-open-btn');
+  const closeBtn = document.getElementById('settings-close-btn');
+  const modal = document.getElementById('settings-modal');
+  
+  const toggleNotes = document.getElementById('toggle-notes');
+  const toggleJester = document.getElementById('toggle-jester');
+  const reasonPanel = document.querySelector('.reason-panel');
   const clownAudio = document.getElementById('clown-audio');
 
-  jesterBtn.addEventListener('click', () => {
-    const isActive = document.body.classList.toggle('jester-mode');
+  settingsBtn.addEventListener('click', () => modal.classList.add('active'));
+  closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
 
-    if (isActive) {
+  // Set initial state based on checkbox (which is now unchecked)
+  reasonPanel.style.display = toggleNotes.checked ? 'block' : 'none';
+
+  // Listen for toggle updates
+  toggleNotes.addEventListener('change', (e) => {
+    reasonPanel.style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  toggleJester.addEventListener('change', (e) => {
+    const isDev = e.target.checked;
+    document.body.classList.toggle('jester-mode', isDev);
+
+    if (isDev) {
       clownAudio.currentTime = 0;
-      clownAudio.play().catch(e => console.log('Audio playback blocked:', e));
-      jesterBtn.textContent = '🤡';
+      clownAudio.play().catch(err => console.log('Audio playback blocked:', err));
     } else {
       clownAudio.pause();
-      jesterBtn.textContent = '⚙️';
     }
   });
 
