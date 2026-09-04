@@ -1,36 +1,99 @@
 {
+  "2026-07-23": {
+    "status": "ditched",
+    "reason": "Slept 1 hour"
+  },
+  "2026-07-24": "streamed",
+  "2026-07-25": {
+    "status": "ditched",
+    "reason": "Preparing giveaway & games for next day"
+  },
+  "2026-07-26": "streamed",
+  "2026-07-27": "streamed",
+  "2026-07-28": "streamed",
+  "2026-07-29": {
+    "status": "ditched",
+    "reason": "Out with parents on official day off"
+  },
+  "2026-07-30": {
+    "status": "ditched",
+    "reason": "Stung by a bee & hungover again"
+  },
+  "2026-07-31": "streamed",
   "2026-08-01": "off",
-  "2026-08-02": "off",
-  "2026-08-03": "off",
-  "2026-08-04": "off",
-  "2026-08-05": "off",
-  "2026-08-06": "off",
+  "2026-08-02": {
+    "status": "ditched",
+    "reason": "Last day spending time with mom"
+  },
+  "2026-08-03": "streamed",
+  "2026-08-04": {
+    "status": "ditched",
+    "reason": "Can't handle the heat OMEGALUL"
+  },
+  "2026-08-05": "streamed",
+  "2026-08-06": "streamed",
   "2026-08-07": "streamed",
-  "2026-08-08": "ditched",
+  "2026-08-08": {
+    "status": "ditched",
+    "reason": "Streamed for 4 days straight"
+  },
   "2026-08-09": "streamed",
-  "2026-08-10": "ditched",
+  "2026-08-10": {
+    "status": "ditched",
+    "reason": "Bricked PC enabling Secure Boot for Faceit"
+  },
   "2026-08-11": "streamed",
   "2026-08-12": "streamed",
-  "2026-08-13": "ditched",
+  "2026-08-13": {
+    "status": "ditched",
+    "reason": "Not feeling well"
+  },
   "2026-08-14": "streamed",
-  "2026-08-15": "ditched",
-  "2026-08-16": "ditched",
+  "2026-08-15": {
+    "status": "ditched",
+    "reason": "Watching The Odyssey at an open theater"
+  },
+  "2026-08-16": {
+    "status": "ditched",
+    "reason": "Dog keeps puking, taking to the vet"
+  },
   "2026-08-17": "streamed",
   "2026-08-18": "streamed",
-  "2026-08-19": "ditched",
+  "2026-08-19": {
+    "status": "ditched",
+    "reason": "Exhausted from lifting heavy at the gym"
+  },
   "2026-08-20": "streamed",
   "2026-08-21": "streamed",
-  "2026-08-22": "ditched",
+  "2026-08-22": {
+    "status": "ditched",
+    "reason": "Sweatier than a slime after the gym"
+  },
   "2026-08-23": "streamed",
-  "2026-08-24": "ditched",
+  "2026-08-24": {
+    "status": "ditched",
+    "reason": "Driving around the city for a DP to HDMI adapter"
+  },
   "2026-08-25": "streamed",
-  "2026-08-26": "ditched",
+  "2026-08-26": {
+    "status": "ditched",
+    "reason": "Setting up 2nd & 3rd monitors after shattering his setup"
+  },
   "2026-08-27": "streamed",
-  "2026-08-28": "ditched",
+  "2026-08-28": {
+    "status": "ditched",
+    "reason": "Dog is very sick"
+  },
   "2026-08-29": "streamed",
   "2026-08-30": "streamed",
   "2026-08-31": "streamed",
-  "2026-09-01": "ditched",
-  "2026-09-02": "ditched",
+  "2026-09-01": {
+    "status": "ditched",
+    "reason": "Out buying antibiotics"
+  },
+  "2026-09-02": {
+    "status": "ditched",
+    "reason": "Used eye drops???"
+  },
   "2026-09-03": "streamed"
 }

@@ -40,7 +40,7 @@
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 1rem;
       margin-bottom: 1.5rem;
     }
@@ -124,7 +124,15 @@
     }
 
     .day-cell[data-status="streamed"] { background-color: var(--color-streamed); }
-    .day-cell[data-status="ditched"] { background-color: var(--color-ditched); }
+    .day-cell[data-status="ditched"] { 
+      background-color: var(--color-ditched); 
+      cursor: pointer;
+      transition: transform 0.1s ease, filter 0.1s ease;
+    }
+    .day-cell[data-status="ditched"]:hover {
+      transform: scale(1.2);
+      filter: brightness(1.2);
+    }
     .day-cell[data-status="off"] { background-color: var(--color-off); }
 
     .legend {
@@ -147,6 +155,44 @@
       width: 12px;
       height: 12px;
       border-radius: 2px;
+    }
+
+    /* Under-Calendar Reason Panel */
+    .reason-panel {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .reason-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .reason-panel-title {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--color-ditched);
+    }
+
+    .reason-panel-date {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .reason-panel-content {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      color: var(--text-main);
+      background-color: var(--bg-color);
+      padding: 0.75rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      min-height: 24px;
     }
   </style>
 </head>
@@ -172,7 +218,11 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Current Ditch Streak</div>
-      <div class="stat-value" id="current-streak">0 days</div>
+      <div class="stat-value" id="current-streak">0 d</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Record Ditch Streak</div>
+      <div class="stat-value" id="max-streak" style="color: #f85149;">0 d</div>
     </div>
   </div>
 
@@ -193,6 +243,15 @@
       <div class="legend-item"><div class="legend-box" style="background: var(--color-ditched);"></div> Ditched</div>
     </div>
   </div>
+
+  <!-- Dynamic Reason Display Panel -->
+  <div class="reason-panel">
+    <div class="reason-panel-header">
+      <span class="reason-panel-title">Ditch Reason</span>
+      <span class="reason-panel-date" id="panel-date">Click a red square</span>
+    </div>
+    <div class="reason-panel-content" id="panel-reason">Select any ditched day to view the recorded reason.</div>
+  </div>
 </div>
 
 <script>
@@ -203,27 +262,26 @@
 
       const grid = document.getElementById('heatmap-grid');
       const monthsHeader = document.getElementById('months-header');
-      
-      const numWeeks = 18; // Number of weeks shown in graph
+      const panelDate = document.getElementById('panel-date');
+      const panelReason = document.getElementById('panel-reason');
+
+      const numWeeks = 18;
       const today = new Date();
       
-      // Calculate start date by going back `numWeeks` and aligning to Sunday (index 0)
-      const todayDayOfWeek = today.getDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+      const todayDayOfWeek = today.getDay();
       const startDate = new Date(today);
       startDate.setDate(today.getDate() - ((numWeeks - 1) * 7 + todayDayOfWeek));
 
       let totalStreams = 0;
       let totalDitches = 0;
       let currentStreak = 0;
-      let countingStreak = true;
+      let maxStreak = 0;
+      let runningStreak = 0;
 
       let lastMonth = -1;
       let colIndex = 0;
 
-      // Iterate forward day by day from start date to today
       const currentDate = new Date(startDate);
-      
-      // Temporary storage for reverse calculations of streak
       const dateList = [];
 
       while (currentDate <= today) {
@@ -232,47 +290,70 @@
         const day = String(currentDate.getDate()).padStart(2, '0');
         const dateString = `${year}-${month}-${day}`;
 
-        // Add month label when crossing into a new month
-        if (currentDate.getDay() === 0) { // Check on Sundays (start of new column)
+        if (currentDate.getDay() === 0) {
           const currentMonth = currentDate.getMonth();
           if (currentMonth !== lastMonth) {
             const monthLabel = document.createElement('span');
             monthLabel.classList.add('month-label');
             monthLabel.textContent = currentDate.toLocaleString('default', { month: 'short' });
-            monthLabel.style.left = `${colIndex * 16}px`; // 12px cell + 4px gap
+            monthLabel.style.left = `${colIndex * 16}px`;
             monthsHeader.appendChild(monthLabel);
             lastMonth = currentMonth;
           }
           colIndex++;
         }
 
+        const entry = streamData[dateString];
+        let status = 'empty';
+        let reason = '';
+
+        if (typeof entry === 'object' && entry !== null) {
+          status = entry.status || 'empty';
+          reason = entry.reason || '';
+        } else if (typeof entry === 'string') {
+          status = entry;
+        }
+
         const cell = document.createElement('div');
         cell.classList.add('day-cell');
         
-        const status = streamData[dateString] || 'empty';
         if (status !== 'empty') {
           cell.setAttribute('data-status', status);
         }
-        
-        cell.title = `${dateString}: ${status}`;
+
+        // Live panel update when clicking ditched days
+        if (status === 'ditched') {
+          cell.addEventListener('click', () => {
+            panelDate.textContent = dateString;
+            panelReason.textContent = reason.trim() ? `"${reason}"` : 'No specific reason recorded for this ditch.';
+          });
+        }
+
         grid.appendChild(cell);
 
         if (status === 'streamed') totalStreams++;
         if (status === 'ditched') totalDitches++;
 
-        dateList.push({ dateString, status });
+        if (status === 'ditched') {
+          runningStreak++;
+          if (runningStreak > maxStreak) {
+            maxStreak = runningStreak;
+          }
+        } else if (status === 'streamed') {
+          runningStreak = 0;
+        }
 
-        // Advance by 1 day
+        dateList.push({ dateString, status });
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // Calculate Current Ditch Streak backwards starting from today
+      // Calculate Current Active Ditch Streak backwards from today
       for (let i = dateList.length - 1; i >= 0; i--) {
         const status = dateList[i].status;
         if (status === 'ditched') {
           currentStreak++;
         } else if (status === 'streamed') {
-          break; // Stop when hitting a streamed day
+          break;
         }
       }
 
@@ -283,6 +364,7 @@
       document.getElementById('total-streams').textContent = totalStreams;
       document.getElementById('success-rate').textContent = `${rate}%`;
       document.getElementById('current-streak').textContent = `${currentStreak} d`;
+      document.getElementById('max-streak').textContent = `${maxStreak} d`;
 
     } catch (error) {
       console.error('Error loading stream data:', error);

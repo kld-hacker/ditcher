@@ -32,16 +32,33 @@ def check_and_update():
         # Twitch embeds "isLiveBroadcast" in the page metadata when a channel is live
         is_live = "isLiveBroadcast" in response.text
 
+        # Helper to safely read the status regardless of string or object format
+        existing_entry = data.get(today_str)
+        existing_status = existing_entry.get("status") if isinstance(existing_entry, dict) else existing_entry
+
         if is_live:
-            data[today_str] = "streamed"
+            # Preserve existing custom reason if present, otherwise set default object structure
+            if isinstance(existing_entry, dict):
+                data[today_str]["status"] = "streamed"
+            else:
+                data[today_str] = {
+                    "status": "streamed",
+                    "reason": ""
+                }
             print(f"[{today_str}] Channel IS live! Recorded as 'streamed'.")
         else:
             # If already marked streamed today, keep it
-            if data.get(today_str) == "streamed":
+            if existing_status == "streamed":
                 print(f"[{today_str}] Channel offline now, but was already marked 'streamed' today.")
             # Only mark as 'ditched' on the final check of the window (18:00 UTC / 20:00 Italian time)
             elif current_hour_utc >= 18:
-                data[today_str] = "ditched"
+                if isinstance(existing_entry, dict):
+                    data[today_str]["status"] = "ditched"
+                else:
+                    data[today_str] = {
+                        "status": "ditched",
+                        "reason": ""
+                    }
                 print(f"[{today_str}] Channel offline at end of stream window. Recorded as 'ditched'.")
             else:
                 print(f"[{today_str}] Channel offline. Waiting for remaining hourly checks before marking 'ditched'.")
