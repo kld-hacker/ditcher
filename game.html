@@ -154,8 +154,8 @@
       transition: bottom 0.05s linear;
     }
 
-    /* Victory Modal Overlay */
-    #victory-modal {
+    /* Modal Overlay Styles (Shared for Victory and Defeat) */
+    .game-result-modal {
       display: none;
       position: absolute;
       top: 0;
@@ -171,19 +171,18 @@
       padding: 20px;
     }
 
-    #victory-modal h2 {
+    .game-result-modal h2 {
       font-size: 2rem;
-      color: #238636;
       margin-bottom: 10px;
     }
 
-    #victory-modal p {
+    .game-result-modal p {
       font-size: 1.1rem;
       color: #f0f6fc;
       margin-bottom: 15px;
     }
 
-    #victory-modal img {
+    .game-result-modal img {
       max-width: 200px;
       max-height: 160px;
       border-radius: 8px;
@@ -192,7 +191,11 @@
       object-fit: cover;
     }
 
-    #restart-btn {
+    /* Specific Modal Variations */
+    #victory-modal h2 { color: #238636; }
+    #defeat-modal h2 { color: #da3633; }
+
+    .action-btn {
       background-color: #238636;
       color: #ffffff;
       border: none;
@@ -204,7 +207,7 @@
       transition: background 0.2s ease;
     }
 
-    #restart-btn:hover {
+    .action-btn:hover {
       background-color: #2ea043;
     }
   </style>
@@ -214,31 +217,33 @@
   <p class="instructions">Alternate <kbd>←</kbd> and <kbd>→</kbd> (or <kbd>A</kbd> and <kbd>D</kbd>) to climb up!</p>
 
   <div id="game-container">
-    <!-- Start Screen Overlay -->
     <div id="start-modal">
       <h2>RED LIGHT, GREEN LIGHT</h2>
       <p>Listen closely to the audio cues!</p>
       <button id="start-btn">START CLIMBING 🎮</button>
     </div>
 
-    <!-- Gym Target Icon -->
     <img id="gym-target" src="./assets/gym.png" alt="Gym Target">
 
     <div id="finish-line"></div>
     
-    <!-- Player Sprite -->
     <img id="player" src="https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_c506da4a8246446ea53a988d7b9abc67/default/dark/1.0" alt="Player Avatar">
 
-    <!-- Victory Screen Modal -->
-    <div id="victory-modal">
+    <div id="victory-modal" class="game-result-modal">
       <h2>🎉 VICTORY! 🎉</h2>
       <p>You successfully made it to the gym, but you still have a dad bod.</p>
       <img src="https://cdn.7tv.app/emote/01G63V1S5G000688QMW90DN85K/4x.webp" alt="Fat GigaChad Victory">
-      <button id="restart-btn" onclick="resetGame()">Play Again</button>
+      <button class="action-btn" onclick="resetGame()">Play Again</button>
+    </div>
+
+    <div id="defeat-modal" class="game-result-modal">
+      <h2>💀 YOU LOST! 💀</h2>
+      <p>You didn't make it to the gym and stayed FAT!</p>
+      <img src="https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_3111a6e11ba44bc696624b23faf6eb0e/default/dark/4.0" alt="Point and Laugh Defeat">
+      <button class="action-btn" onclick="resetGame()">Try Again</button>
     </div>
   </div>
 
-  <!-- Audio Elements -->
   <audio id="audio-intro" src="./assets/intro.mp3" preload="auto"></audio>
   <audio id="audio-go" src="./assets/go.mp3" preload="auto"></audio>
   <audio id="audio-stop" src="./assets/stop.mp3" preload="auto"></audio>
@@ -250,6 +255,7 @@
     const startModal = document.getElementById('start-modal');
     const startBtn = document.getElementById('start-btn');
     const victoryModal = document.getElementById('victory-modal');
+    const defeatModal = document.getElementById('defeat-modal');
     
     const audioIntro = document.getElementById('audio-intro');
     const audioGo = document.getElementById('audio-go');
@@ -275,14 +281,12 @@
     let lastKeyPressed = null;
     let animationTimer = null;
 
-    // Play intro immediately when iframe loads (authorized via index.html button click)
     window.addEventListener('DOMContentLoaded', () => {
       audioIntro.play().catch(err => {
         console.log('Autoplay prevented:', err);
       });
     });
 
-    // Start game loop when user explicitly clicks "START CLIMBING"
     startBtn.addEventListener('click', () => {
       startModal.style.display = 'none';
       audioIntro.pause();
@@ -358,12 +362,7 @@
         triggerMovingAnimation();
 
         if (!isGreenLight && !inGracePeriod) {
-          playerBottom = START_BOTTOM;
-          player.style.bottom = playerBottom + 'px';
-          player.src = EMOTE_STILL;
-          lastKeyPressed = null;
-          clearTimeout(animationTimer);
-          alert("CAUGHT MOVING ON RED LIGHT! Back to the bottom!");
+          triggerDefeat();
           return;
         }
 
@@ -375,6 +374,19 @@
         }
       }
     });
+
+    function triggerDefeat() {
+      gameActive = false;
+      clearTimeout(lightTimeout);
+      clearTimeout(graceTimeout);
+      clearTimeout(animationTimer);
+
+      audioGo.pause();
+      audioStop.pause();
+
+      player.src = EMOTE_STILL;
+      defeatModal.style.display = 'flex';
+    }
 
     function triggerVictory() {
       gameActive = false;
@@ -401,6 +413,8 @@
       player.src = EMOTE_STILL;
       
       victoryModal.style.display = 'none';
+      defeatModal.style.display = 'none';
+      
       gameActive = true;
       isGreenLight = false;
       inGracePeriod = false;
