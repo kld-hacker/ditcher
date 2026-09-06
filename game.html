@@ -250,7 +250,7 @@
     <div id="start-modal">
       <h2>RED LIGHT, GREEN LIGHT</h2>
       <p>Alternate Left/Right arrow keys to climb!</p>
-      <button id="start-btn" onclick="startGame()">CLICK TO START 🎮</button>
+      <button id="start-btn">CLICK TO START 🎮</button>
     </div>
 
     <!-- Gym Target Icon -->
@@ -258,7 +258,7 @@
 
     <div id="finish-line"></div>
     
-    <!-- Player Sprite (Defaults to ResidentSleeper) -->
+    <!-- Player Sprite (ResidentSleeper) -->
     <img id="player" src="https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_c506da4a8246446ea53a988d7b9abc67/default/dark/1.0" alt="Player Avatar">
 
     <!-- Victory Screen Modal -->
@@ -280,6 +280,7 @@
     const player = document.getElementById('player');
     const gymTarget = document.getElementById('gym-target');
     const startModal = document.getElementById('start-modal');
+    const startBtn = document.getElementById('start-btn');
     const victoryModal = document.getElementById('victory-modal');
     
     const audioIntro = document.getElementById('audio-intro');
@@ -293,33 +294,34 @@
 
     const START_BOTTOM = 20;
     const FINISH_LINE_BOTTOM = 425;
-    const MOVE_STEP = 3; // Balanced step distance
-    const GRACE_PERIOD_MS = 500;
+    const MOVE_STEP = 3;
+    const GRACE_PERIOD_MS = 200;
     const ANIMATION_DURATION_MS = 200;
 
     let playerBottom = START_BOTTOM;
     let isGreenLight = false;
     let inGracePeriod = false;
     let gameActive = false;
+
     let lightTimeout = null;
     let graceTimeout = null;
-
     let lastKeyPressed = null;
     let animationTimer = null;
 
-    function startGame() {
-      startModal.style.display = 'none';
-
-      // Play the combined intro track ("Jonathan Productions" -> "SHUT UP JONATHAN")
-      audioIntro.play().then(() => {
-        audioIntro.onended = () => {
-          beginGameLoop();
-        };
-      }).catch(() => {
-        // Fallback if intro audio fails
-        beginGameLoop();
+    // 1. Play intro audio immediately on page load (using the click state from index.html)
+    window.addEventListener('DOMContentLoaded', () => {
+      audioIntro.play().catch(() => {
+        // Log quietly if browser policies block sound before user click
+        console.log("Autoplay waiting for user interaction");
       });
-    }
+    });
+
+    // 2. Start game ONLY when the user manually clicks the Start button
+    startBtn.addEventListener('click', () => {
+      startModal.style.display = 'none';
+      audioIntro.pause(); // Stop intro audio if still playing when clicked
+      beginGameLoop();
+    });
 
     function beginGameLoop() {
       gameActive = true;
