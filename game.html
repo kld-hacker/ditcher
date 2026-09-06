@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red Light, Green Light - Peppseez Edition</title>
+  <title>Red Light, Green Light</title>
   <style>
     * {
       box-sizing: border-box;
@@ -19,39 +19,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .nav-header {
-      width: 400px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .back-link {
-      color: #58a6ff;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1rem;
-      transition: color 0.2s ease;
-    }
-
-    .back-link:hover {
-      color: #79c0ff;
-      text-decoration: underline;
-    }
-
-    h1 {
-      color: #f0f6fc;
-      font-size: 1.5rem;
+      height: 100vh;
+      overflow: hidden;
     }
 
     p.instructions {
-      margin-bottom: 20px;
-      font-size: 0.95rem;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
       color: #8b949e;
       text-align: center;
     }
@@ -107,7 +81,7 @@
     }
 
     #start-btn {
-      background-color: #9146ff;
+      background-color: #238636;
       color: #ffffff;
       border: none;
       padding: 14px 28px;
@@ -115,16 +89,16 @@
       font-weight: bold;
       border-radius: 8px;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(145, 70, 255, 0.4);
+      box-shadow: 0 4px 14px rgba(35, 134, 54, 0.4);
       transition: transform 0.15s ease, background-color 0.2s ease;
     }
 
     #start-btn:hover {
-      background-color: #772ce8;
+      background-color: #2ea043;
       transform: scale(1.05);
     }
 
-    /* Upscaled Gym Target Icon */
+    /* Gym Target Icon */
     #gym-target {
       position: absolute;
       top: 5px;
@@ -137,7 +111,6 @@
       filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
       transition: transform 0.15s ease;
       image-rendering: pixelated;
-      image-rendering: crisp-edges;
     }
 
     @keyframes pulseTarget {
@@ -150,7 +123,7 @@
       animation: pulseTarget 0.4s ease-in-out;
     }
 
-    /* Horizontal Finish Line at Top */
+    /* Finish Line */
     #finish-line {
       position: absolute;
       top: 65px;
@@ -238,19 +211,14 @@
 </head>
 <body>
 
-  <div class="nav-header">
-    <a href="index.html" class="back-link">← Back to Ditch Tracker</a>
-    <h1>Red Light, Green Light</h1>
-  </div>
-
   <p class="instructions">Alternate <kbd>←</kbd> and <kbd>→</kbd> (or <kbd>A</kbd> and <kbd>D</kbd>) to climb up!</p>
 
   <div id="game-container">
     <!-- Start Screen Overlay -->
     <div id="start-modal">
       <h2>RED LIGHT, GREEN LIGHT</h2>
-      <p>Alternate Left/Right arrow keys to climb!</p>
-      <button id="start-btn">CLICK TO START 🎮</button>
+      <p>Listen closely to the audio cues!</p>
+      <button id="start-btn">START CLIMBING 🎮</button>
     </div>
 
     <!-- Gym Target Icon -->
@@ -258,7 +226,7 @@
 
     <div id="finish-line"></div>
     
-    <!-- Player Sprite (ResidentSleeper) -->
+    <!-- Player Sprite -->
     <img id="player" src="https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_c506da4a8246446ea53a988d7b9abc67/default/dark/1.0" alt="Player Avatar">
 
     <!-- Victory Screen Modal -->
@@ -288,14 +256,13 @@
     const audioStop = document.getElementById('audio-stop');
     const audioVictory = document.getElementById('audio-victory');
 
-    // Emote Asset URLs
     const EMOTE_MOVING = 'https://cdn.7tv.app/emote/01KYMVYX1J1N728TH418SSJC3C/1x.webp';
     const EMOTE_STILL = 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_c506da4a8246446ea53a988d7b9abc67/default/dark/1.0';
 
     const START_BOTTOM = 20;
     const FINISH_LINE_BOTTOM = 425;
-    const MOVE_STEP = 3;
-    const GRACE_PERIOD_MS = 200;
+    const MOVE_STEP = 6;
+    const GRACE_PERIOD_MS = 500;
     const ANIMATION_DURATION_MS = 200;
 
     let playerBottom = START_BOTTOM;
@@ -308,18 +275,17 @@
     let lastKeyPressed = null;
     let animationTimer = null;
 
-    // 1. Play intro audio immediately on page load (using the click state from index.html)
+    // Play intro immediately when iframe loads (authorized via index.html button click)
     window.addEventListener('DOMContentLoaded', () => {
-      audioIntro.play().catch(() => {
-        // Log quietly if browser policies block sound before user click
-        console.log("Autoplay waiting for user interaction");
+      audioIntro.play().catch(err => {
+        console.log('Autoplay prevented:', err);
       });
     });
 
-    // 2. Start game ONLY when the user manually clicks the Start button
+    // Start game loop when user explicitly clicks "START CLIMBING"
     startBtn.addEventListener('click', () => {
       startModal.style.display = 'none';
-      audioIntro.pause(); // Stop intro audio if still playing when clicked
+      audioIntro.pause();
       beginGameLoop();
     });
 
@@ -358,7 +324,6 @@
         }, GRACE_PERIOD_MS);
       }
 
-      // Dynamic switch interval (0.8s to 2.0s)
       const nextSwitch = Math.random() * 1200 + 800;
       lightTimeout = setTimeout(cycleLight, nextSwitch);
     }
