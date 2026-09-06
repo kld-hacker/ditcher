@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Red Light, Green Light - Peppseez Edition</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .nav-header {
+      width: 400px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .back-link {
+      color: #58a6ff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: #79c0ff;
+      text-decoration: underline;
+    }
+
+    h1 {
+      color: #f0f6fc;
+      font-size: 1.5rem;
+    }
+
+    p.instructions {
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      color: #8b949e;
+      text-align: center;
+    }
+
+    kbd {
+      background-color: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: monospace;
+      color: #c9d1d9;
+    }
+
+    /* Vertical Game Track Container */
+    #game-container {
+      position: relative;
+      width: 400px;
+      height: 550px;
+      background-color: #161b22;
+      border: 4px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Start Screen Overlay */
+    #start-modal {
+      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(13, 17, 23, 0.95);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #start-modal h2 {
+      font-size: 1.8rem;
+      color: #58a6ff;
+      margin-bottom: 12px;
+    }
+
+    #start-modal p {
+      font-size: 1rem;
+      color: #8b949e;
+      margin-bottom: 24px;
+    }
+
+    #start-btn {
+      background-color: #9146ff;
+      color: #ffffff;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(145, 70, 255, 0.4);
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+
+    #start-btn:hover {
+      background-color: #772ce8;
+      transform: scale(1.05);
+    }
+
+    /* Upscaled Gym Target Icon */
+    #gym-target {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: auto;
+      object-fit: contain;
+      z-index: 2;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+      transition: transform 0.15s ease;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    @keyframes pulseTarget {
+      0% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.15); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+
+    .pulse {
+      animation: pulseTarget 0.4s ease-in-out;
+    }
+
+    /* Horizontal Finish Line at Top */
+    #finish-line {
+      position: absolute;
+      top: 65px;
+      left: 0;
+      right: 0;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffffff,
+        #ffffff 12px,
+        #000000 12px,
+        #000000 24px
+      );
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Player Sprite */
+    #player {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: bottom 0.05s linear;
+    }
+
+    /* Victory Modal Overlay */
+    #victory-modal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(13, 17, 23, 0.95);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #victory-modal h2 {
+      font-size: 2rem;
+      color: #238636;
+      margin-bottom: 10px;
+    }
+
+    #victory-modal p {
+      font-size: 1.1rem;
+      color: #f0f6fc;
+      margin-bottom: 15px;
+    }
+
+    #victory-modal img {
+      max-width: 200px;
+      max-height: 160px;
+      border-radius: 8px;
+      border: 2px solid #30363d;
+      margin-bottom: 20px;
+      object-fit: cover;
+    }
+
+    #restart-btn {
+      background-color: #238636;
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    #restart-btn:hover {
+      background-color: #2ea043;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="nav-header">
+    <a href="index.html" class="back-link">← Back to Ditch Tracker</a>
+    <h1>Red Light, Green Light</h1>
+  </div>
+
+  <p class="instructions">Alternate <kbd>←</kbd> and <kbd>→</kbd> (or <kbd>A</kbd> and <kbd>D</kbd>) to climb up!</p>
+
+  <div id="game-container">
+    <!-- Start Screen Overlay -->
+    <div id="start-modal">
+      <h2>RED LIGHT, GREEN LIGHT</h2>
+      <p>Alternate Left/Right arrow keys to climb!</p>
+      <button id="start-btn" onclick="startGame()">CLICK TO START 🎮</button>
+    </div>
+
+    <!-- Gym Target Icon -->
+    <img id="gym-target" src="./assets/gym.png" alt="Gym Target">
+
+    <div id="finish-line"></div>
+    
+    <!-- Player Sprite (Defaults to ResidentSleeper) -->
+    <img id="player" src="https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_c506da4a8246446ea53a988d7b9abc67/default/dark/1.0" alt="Player Avatar">
+
+    <!-- Victory Screen Modal -->
+    <div id="victory-modal">
+      <h2>🎉 VICTORY! 🎉</h2>
+      <p>You successfully made it to the gym, but you still have a dad bod.</p>
+      <img src="https://cdn.7tv.app/emote/01G63V1S5G000688QMW90DN85K/4x.webp" alt="Fat GigaChad Victory">
+      <button id="restart-btn" onclick="resetGame()">Play Again</button>
+    </div>
+  </div>
+
+  <!-- Audio Elements -->
+  <audio id="audio-intro" src="./assets/intro.mp3" preload="auto"></audio>
+  <audio id="audio-go" src="./assets/go.mp3" preload="auto"></audio>
+  <audio id="audio-stop" src="./assets/stop.mp3" preload="auto"></audio>
+  <audio id="audio-victory" src="https://www.myinstants.com/media/sounds/gigachad-theme-music.mp3" preload="auto"></audio>
+
+  <script>
+    const player = document.getElementById('player');
+    const gymTarget = document.getElementById('gym-target');
+    const startModal = document.getElementById('start-modal');
+    const victoryModal = document.getElementById('victory-modal');
+    
+    const audioIntro = document.getElementById('audio-intro');
+    const audioGo = document.getElementById('audio-go');
+    const audioStop = document.getElementById('audio-stop');
+    const audioVictory = document.getElementById('audio-victory');
+
+    // Emote Asset URLs
+    const EMOTE_MOVING = 'https://cdn.7tv.app/emote/01KYMVYX1J1N728TH418SSJC3C/1x.webp';
+    const EMOTE_STILL = 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_c506da4a8246446ea53a988d7b9abc67/default/dark/1.0';
+
+    const START_BOTTOM = 20;
+    const FINISH_LINE_BOTTOM = 425;
+    const MOVE_STEP = 3; // Balanced step distance
+    const GRACE_PERIOD_MS = 500;
+    const ANIMATION_DURATION_MS = 200;
+
+    let playerBottom = START_BOTTOM;
+    let isGreenLight = false;
+    let inGracePeriod = false;
+    let gameActive = false;
+    let lightTimeout = null;
+    let graceTimeout = null;
+
+    let lastKeyPressed = null;
+    let animationTimer = null;
+
+    function startGame() {
+      startModal.style.display = 'none';
+
+      // Play the combined intro track ("Jonathan Productions" -> "SHUT UP JONATHAN")
+      audioIntro.play().then(() => {
+        audioIntro.onended = () => {
+          beginGameLoop();
+        };
+      }).catch(() => {
+        // Fallback if intro audio fails
+        beginGameLoop();
+      });
+    }
+
+    function beginGameLoop() {
+      gameActive = true;
+      isGreenLight = false;
+      inGracePeriod = false;
+      lastKeyPressed = null;
+
+      lightTimeout = setTimeout(cycleLight, 800);
+    }
+
+    function cycleLight() {
+      if (!gameActive) return;
+
+      isGreenLight = !isGreenLight;
+
+      if (isGreenLight) {
+        inGracePeriod = false;
+        clearTimeout(graceTimeout);
+
+        audioStop.pause();
+        audioGo.currentTime = 0;
+        audioGo.play().catch(() => {});
+
+        gymTarget.classList.add('pulse');
+        setTimeout(() => gymTarget.classList.remove('pulse'), 400);
+      } else {
+        audioGo.pause();
+        audioStop.currentTime = 0;
+        audioStop.play().catch(() => {});
+
+        inGracePeriod = true;
+        graceTimeout = setTimeout(() => {
+          inGracePeriod = false;
+        }, GRACE_PERIOD_MS);
+      }
+
+      // Dynamic switch interval (0.8s to 2.0s)
+      const nextSwitch = Math.random() * 1200 + 800;
+      lightTimeout = setTimeout(cycleLight, nextSwitch);
+    }
+
+    function triggerMovingAnimation() {
+      if (player.src !== EMOTE_MOVING) {
+        player.src = EMOTE_MOVING;
+      }
+
+      clearTimeout(animationTimer);
+
+      animationTimer = setTimeout(() => {
+        if (gameActive) {
+          player.src = EMOTE_STILL;
+        }
+      }, ANIMATION_DURATION_MS);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!gameActive) return;
+
+      const key = e.key;
+
+      if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'a' || key === 'd' || key === 'A' || key === 'D') {
+        const currentDirection = (key === 'ArrowLeft' || key === 'a' || key === 'A') ? 'Left' : 'Right';
+
+        if (currentDirection === lastKeyPressed) {
+          return;
+        }
+
+        lastKeyPressed = currentDirection;
+        triggerMovingAnimation();
+
+        if (!isGreenLight && !inGracePeriod) {
+          playerBottom = START_BOTTOM;
+          player.style.bottom = playerBottom + 'px';
+          player.src = EMOTE_STILL;
+          lastKeyPressed = null;
+          clearTimeout(animationTimer);
+          alert("CAUGHT MOVING ON RED LIGHT! Back to the bottom!");
+          return;
+        }
+
+        playerBottom += MOVE_STEP;
+        player.style.bottom = playerBottom + 'px';
+
+        if (playerBottom >= FINISH_LINE_BOTTOM) {
+          triggerVictory();
+        }
+      }
+    });
+
+    function triggerVictory() {
+      gameActive = false;
+      clearTimeout(lightTimeout);
+      clearTimeout(graceTimeout);
+      clearTimeout(animationTimer);
+      
+      audioGo.pause();
+      audioStop.pause();
+
+      audioVictory.currentTime = 0;
+      audioVictory.play().catch(() => {});
+
+      player.src = EMOTE_STILL;
+      victoryModal.style.display = 'flex';
+    }
+
+    function resetGame() {
+      audioVictory.pause();
+      audioVictory.currentTime = 0;
+
+      playerBottom = START_BOTTOM;
+      player.style.bottom = playerBottom + 'px';
+      player.src = EMOTE_STILL;
+      
+      victoryModal.style.display = 'none';
+      gameActive = true;
+      isGreenLight = false;
+      inGracePeriod = false;
+      lastKeyPressed = null;
+
+      clearTimeout(lightTimeout);
+      clearTimeout(graceTimeout);
+      clearTimeout(animationTimer);
+
+      lightTimeout = setTimeout(cycleLight, 1000);
+    }
+  </script>
+</body>
+</html>

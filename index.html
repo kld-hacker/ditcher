@@ -380,6 +380,35 @@
       transition: .2s;
       border-radius: 50%;
     }
+    .game-banner {
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .game-btn {
+      display: inline-block;
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #9146ff 0%, #772ce8 100%);
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 14px rgba(145, 70, 255, 0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .game-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(145, 70, 255, 0.6);
+      background: linear-gradient(135deg, #a25aff 0%, #883cf9 100%);
+    }
+
+    .game-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(145, 70, 255, 0.3);
+    }
 
     input:checked + .slider {
       background-color: #238636;
@@ -398,6 +427,11 @@
   <div id="settings-banner" class="settings-banner">
     <span>💡 <strong>Notice:</strong> Ditch Notes are currently hidden. You can enable them in <strong>Settings</strong> (top-right ⚙️) to test them while under development!</span>
     <button id="close-banner" aria-label="Close banner">×</button>
+  </div>
+  <div class="game-banner">
+    <a href="game.html" class="game-btn">
+      🎮 Play Red Light, Green Light
+    </a>
   </div>
 
   <header>
